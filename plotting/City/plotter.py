@@ -8,7 +8,8 @@ with open('cycle.in.101') as text :
 		x.append(float(coord[0]))
 		y.append(float(coord[1]))
 
-with open('cycle.out.101') as txt :
+postfix = ''
+with open('cycle.out.101' + postfix) as txt :
 	index = txt.readline().split()
 	for i in range(len(index)) :
 		index[i] = int(index[i]) - 1
@@ -31,4 +32,4 @@ patch = patches.PathPatch(path, facecolor='white', lw=2)
 ax.add_patch(patch)
 ax.set_xlim(0, 100)
 ax.set_ylim(0, 100)
-plt.show()
+plt.savefig('plot_cycle_out_101%s.png' % postfix)

@@ -3,7 +3,6 @@
 #include<math.h>
 #include<time.h>
 #include<limits>
-#include<fstream>
 
 #define MAXN	318 // Maximum value of N
 #define PSIZE	10 // Size of the population
@@ -43,13 +42,6 @@ SOL population[PSIZE];
 // eval() updates this
 SOL record;
 
-void pprint(const char* TAG, const SOL *s) {
-  printf("<%s>\n", TAG);
-  for(int i = 0; i < N; i ++) {
-	  printf("%3d ", s->ch[i]);
-	  if(i%10==9) printf("\n");
-  } printf("%lf\n", s->f);
-}
 // calculate the fitness of s and store it into s->f
 double eval(SOL *s) {
 	int i;
@@ -90,19 +82,19 @@ void gen_rand_sol(SOL *s) {
 void RouletteWheelSelection(SOL **p) {
   int i;
   // find min, max, total fitness
-  double f_total = 0.0f;
   double f_min = std::numeric_limits<double>::max();
   double f_max = std::numeric_limits<double>::min();
   for(i = 0; i < PSIZE; i ++) {
     double f_current = population[i].f;
-    f_total += f_current;
     if(f_min > f_current) f_min = f_current;
     if(f_max < f_current) f_max = f_current;
   }
   /* Start shooting Roulette */
-  double point = rand() & PSIZE;
-  double sum = 0;
   double K = 3;
+  double f_total = 0;
+  for(i = 0; i < PSIZE; i ++) f_total += (f_min - population[i].f) + (f_min - f_max)/(K-1);
+  double point = static_cast <float> (rand()) / static_cast <float> (f_total);
+  double sum = 0;
   for(i = 1; i < PSIZE; i++) {
     double f_current = population[i].f;
     double region = (f_min - f_current) + (f_min - f_max)/(K-1);
@@ -152,15 +144,12 @@ int isOffspringCompleted(const SOL *offspring) {
   }
   return sum == N * (N-1) / 2;
 }
-void PMXCrossover(const SOL *p1, const SOL *p2, SOL *c, const int stackTrace) {
+void PMXCrossover(const SOL *p1, const SOL *p2, SOL *c) {
   setRandomSliceIndexes();
   /* Copy Parent1 in Slice btw s1 and s2 */
-  if(stackTrace) {pprint("p1", p1); pprint("p2", p2); printf("slice from %d to %d\n", s1, s2);}
   int i, remains = N - (s2 - s1 + 1);
   for(i =  0; i <  N; i ++) c->ch[i] = -1;
-  if(stackTrace) pprint("after init", c);
   for(i = s1; i <= s2; i ++) c->ch[i] = p1->ch[i];
-  if(stackTrace) pprint("after copy", c);
   int current = (s2+1)%N;
   int j = s1;
   while (remains > 0) {
@@ -168,12 +157,10 @@ void PMXCrossover(const SOL *p1, const SOL *p2, SOL *c, const int stackTrace) {
       c->ch[current] = p2->ch[current];
       current = (current+1)%N;
       remains --;
-	  if(stackTrace) pprint("after safe", c);
     } else {
       int appended = 0;
       while(!appended) {
         if(hasDuplication(p2->ch[j], p1->ch, s1, s2)) {
-			if(stackTrace) printf("collision. passing @ %d\n", j);
 			j = (j+1)%N;
 		}
         else {
@@ -181,7 +168,6 @@ void PMXCrossover(const SOL *p1, const SOL *p2, SOL *c, const int stackTrace) {
           current = (current+1)%N;
           appended = 1;
           remains --;
-		  if(stackTrace) { printf("takes # @ %d\n", j); pprint("after notsafe", c); }
           j = (j+1)%N;
         }
       }
@@ -189,13 +175,7 @@ void PMXCrossover(const SOL *p1, const SOL *p2, SOL *c, const int stackTrace) {
   }
   if (isOffspringCompleted(c)) {
     return;
-  } else {
-    if(stackTrace) exit(1);
-	else {
-		PMXCrossover(p1, p2, c, 1);
-		exit(1);
-	}
-  }
+  } 
 }
 
 void directFromFirst(const SOL *p1, const SOL *p2, SOL *c) {
@@ -204,7 +184,7 @@ void directFromFirst(const SOL *p1, const SOL *p2, SOL *c) {
 	}
 }
 void crossover(const SOL *p1, const SOL *p2, SOL *c) {
-  PMXCrossover(p1, p2, c, 0/*false*/);
+  PMXCrossover(p1, p2, c);
   eval(c);
 }
 
@@ -214,15 +194,11 @@ void crossover(const SOL *p1, const SOL *p2, SOL *c) {
 void inversionMutation(SOL *s) {
 	setRandomSliceIndexes();
 	int i, temp;
-	//printf("slice from %d to %d\n", s1, s2);
-	//pprint("before", s);
 	for(i = 0; i < (s2 - s1) / 2; i ++) {
-		//printf("[%d<->%d]", s1+i, s2-i);
 		temp = s->ch[s1+i];
 		s->ch[s1+i] = s->ch[s2-i];
 		s->ch[s2-i] = temp;
 	}
-	//pprint("after", s);
 }
 void mutation(SOL *s) {
 	inversionMutation(s);
@@ -250,7 +226,12 @@ void replacement(const SOL *offspr) {
 		population[p].ch[i] = offspr->ch[i];
 	}
 }
-
+double getAverageFitness() {
+	double total = 0.0f;
+	for(int i = 0; i < PSIZE; i++) {
+		total += population[i].f;
+	} return total / PSIZE;
+}
 int GENERATION;
 // a "steady-state" GA
 void GA() {
@@ -262,6 +243,7 @@ void GA() {
 		gen_rand_sol(&population[i]);
 	}
 
+	FILE *pf = fopen("output", "w");
 	while (1) {
 		if(time(NULL) - begin >= TimeLimit - 1) return; // end condition
 		SOL *p1, *p2;
@@ -270,20 +252,19 @@ void GA() {
 		mutation(&c);
 		replacement(&c);
 		GENERATION ++;
-	}
+	} fclose(pf);
 }
 
 
 // read the test case from stdin
 // and initialize some values such as record.f and Dist
 void init() {
-	FILE *pf = fopen("../input/cycle.in.318", "r");
 	int i, j, tmp;
 	double time_limit;
 
-	tmp = fscanf(pf, "%d", &N);
+	tmp = scanf("%d", &N);
 	for (i = 0; i < N; i++) {
-		tmp = fscanf(pf, "%lf %lf", &X[i], &Y[i]);
+		tmp = scanf("%lf %lf", &X[i], &Y[i]);
 	}
 	for (i = 0; i < N; i++) {
 		for (j = 0; j < N; j++) {
@@ -291,7 +272,7 @@ void init() {
 			Dist[i][j] = sqrt(dx*dx + dy*dy);
 		}
 	}
-	tmp = fscanf(pf, "%lf", &time_limit);
+	tmp = scanf("%lf", &time_limit);
 	TimeLimit = (long long) time_limit;
 
 	record.f = 1e100;
@@ -315,12 +296,9 @@ void answer() {
 
 int main() {
 	srand(time(NULL));
-  int nLoop = 29;
-  for(int loop = 0; loop < nLoop; loop++) {
   	init();
   	GA();
   	answer();
-  }
 	return 0;
 }
 
