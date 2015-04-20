@@ -288,8 +288,6 @@ void answer() {
 		if (i > 0) printf(" ");
 		printf("%d", record.ch[i]+1);
 	}
-	printf(" %lf", record.f);
-	printf(" GENERATION : %d", GENERATION);
 	printf("\n");
 }
 
