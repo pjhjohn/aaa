@@ -305,7 +305,7 @@ void GA() {
 // read the test case from stdin
 // and initialize some values such as record.f and Dist
 void init() {
-    FILE *pf = fopen("../input/cycle.in.51", "r");
+    FILE *pf = fopen("../input/cycle.in.200", "r");
     int i, j, tmp;
     double time_limit;
 
@@ -342,7 +342,7 @@ void answer() {
 
 int main() {
     srand(time(NULL));
-  int nLoop = 29;
+  int nLoop = 1;
   for(int loop = 0; loop < nLoop; loop++) {
     init();
     GA();
