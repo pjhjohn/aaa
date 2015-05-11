@@ -29,6 +29,11 @@ double eval(SOL *s) {       // calculate the fitness of s and store it into s->f
         for (int i = 0; i < N; i++) record.ch[i] = s->ch[i];
     } return s->f;
 }
+double fitness(SOL *s) {
+    double f = 0;
+    for (int i = 0; i < N; i++) f += Dist[s->ch[i]][s->ch[(i+1)%N]];
+    return f;
+}
 
 void gen_rand_sol(SOL *s) { // generate a random order-based solution at s
     for (int i = 0; i < N; i++) s->ch[i] = i;
@@ -177,9 +182,13 @@ void OrderCrossover(const SOL *p1, const SOL *p2, SOL *c) {
         if(duplicated(p2->ch[iP2], p1->ch, s1, s2)) {
             iP2 ++;
         } else {
-            c->ch[iC] = p2->ch[iP2];
-            iC ++;
-            iP2 ++;
+            if(iC == s1) {
+                iC += s2 - s1;
+            } else {
+                c->ch[iC] = p2->ch[iP2];
+                iC ++;
+                iP2 ++;
+            }
         }
     }
 }
@@ -193,30 +202,63 @@ void crossover(const SOL *p1, const SOL *p2, SOL *c) {
   eval(c);
 }
 
-
-// mutate the solution s
-// currently this operator does nothing
+/* MUTATION */
 void inversionMutation(SOL *s) {
     setRandomSliceIndexes();
     int i, temp;
-    //printf("slice from %d to %d\n", s1, s2);
-    //pprint("before", s);
     for(i = 0; i < (s2 - s1) / 2; i ++) {
-        //printf("[%d<->%d]", s1+i, s2-i);
         temp = s->ch[s1+i];
         s->ch[s1+i] = s->ch[s2-i];
         s->ch[s2-i] = temp;
     }
-    //pprint("after", s);
 }
 void mutation(SOL *s) {
     inversionMutation(s);
     eval(s);
 }
 
+/* LOCAL OPTIMIZATION */
+void inverse(SOL *s, int from, int to) {
+    int i, temp;
+    for(i = 0; i < (to - from + 1) / 2; i ++) {
+        temp = s->ch[from+i];
+        s->ch[from+i] = s->ch[to-i];
+        s->ch[to-i] = temp;
+    }
+}
+void copy(SOL *target, SOL *result) {
+    result->f = target->f;
+    for(int i = 0; i < N; i ++) result->ch[i] = target->ch[i];
+}
+void _2_opt_(SOL *s) {
+    int from, to;
+    SOL sol, inversed;
+    copy(s, &sol);
+    while(true) {
+        double solf = fitness(&sol);
+        int better = false;
+        for(from = 0; from < N - 1; from ++) {
+            for(to = from + 1; to < N; to ++) {
+                copy(&sol, &inversed);
+                inverse(&inversed, from, to);
+                double invf = fitness(&inversed);
+                if (solf > invf) {
+                    copy(&inversed, &sol);
+                    better = true;
+                    break;
+                } else continue;
+            } if(better) break;
+        }
+        if (!better) break;
+    }
+    copy(&sol, s);
+}
+void local_optimization(SOL *s) {
+    _2_opt_(s);
+    eval(s);
+}
 
-// replace one solution from the population with the new offspring
-// currently any random solution can be replaced
+/* REPLACEMENT */
 int getIndexOfWorst() {
   double f_max = std::numeric_limits<double>::min();
   int index = -1;
@@ -253,6 +295,7 @@ void GA() {
         selection(&p1); selection(&p2);
         crossover(p1, p2, &c);
         mutation(&c);
+        local_optimization(&c);
         replacement(&c);
         GENERATION ++;
     }
@@ -262,7 +305,7 @@ void GA() {
 // read the test case from stdin
 // and initialize some values such as record.f and Dist
 void init() {
-    FILE *pf = fopen("../input/cycle.in.101", "r");
+    FILE *pf = fopen("../input/cycle.in.51", "r");
     int i, j, tmp;
     double time_limit;
 
@@ -297,7 +340,6 @@ void answer() {
     printf("\n");
 }
 
-
 int main() {
     srand(time(NULL));
   int nLoop = 29;
@@ -308,5 +350,3 @@ int main() {
   }
     return 0;
 }
-
-
