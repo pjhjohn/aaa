@@ -5,43 +5,39 @@
 #include<limits>
 #include<fstream>
 
-#define MAXN	318 // Maximum value of N
-#define PSIZE	10 // Size of the population
+/* PROJECT 2 ESSENTIALS */
+#define MAXN	600 // Maximum value of N ( of project 2 )
+#define PSIZE	10  // Size of the population
 
-/*****************************************************************
-	Input variables
-*****************************************************************/
-// (X[i], Y[i]) := the i-th location
-double X[MAXN], Y[MAXN];
-// The number of locations
-int N;
+double X[MAXN], Y[MAXN];    // (X[i], Y[i]) := the i-th location
+int N;                      // The number of locations
+long long TimeLimit;        // Time Limitation
+double Dist[MAXN][MAXN];    // Distance Map
 
-// Time limit for the test case
-long long TimeLimit;
-
-
-// Dist[i][j] := the distance between (X[i], Y[i]) and (X[j], Y[j])
-// will be automatically calculated
-double Dist[MAXN][MAXN];
-
-
-
-/*****************************************************************
-	GA variables and functions
-	Note that the representation is currently order-based.
-	A chromosome will be a permutation of (0, 1, ..., N-1).
-*****************************************************************/
-typedef struct {
-	int ch[MAXN];	// chromosome
-	double f;		// fitness
+typedef struct {            // Note that the representation is currently order-based.
+	int ch[MAXN];           // chromosome : a permutation of (0, 1, ..., N-1).
+	double f;               // fitness
 } SOL;
+SOL population[PSIZE];      // Population
+SOL record;                 // Best solution ( eval() automatically updates this )
 
-// population of solutions
-SOL population[PSIZE];
+double eval(SOL *s) {       // calculate the fitness of s and store it into s->f
+	s->f = 0;
+	for (int i = 0; i < N; i++) s->f += Dist[s->ch[i]][s->ch[(i+1)%N]];
+	if (record.f > s->f) {
+		record.f = s->f;
+		for (int i = 0; i < N; i++) record.ch[i] = s->ch[i];
+	} return s->f;
+}
 
-// best (found) solution
-// eval() updates this
-SOL record;
+void gen_rand_sol(SOL *s) { // generate a random order-based solution at s
+    for (int i = 0; i < N; i++) s->ch[i] = i;
+	for (int i = 0; i < N; i++) {
+		int r = i + rand() % (N - i);	// r is a random number in [i..N-i)
+		int tmp = s->ch[i]; s->ch[i] = s->ch[r]; s->ch[r] = tmp; // swap
+	} eval(s);
+}
+
 
 void pprint(const char* TAG, const SOL *s) {
   printf("<%s>\n", TAG);
@@ -50,59 +46,27 @@ void pprint(const char* TAG, const SOL *s) {
 	  if(i%10==9) printf("\n");
   } printf("%lf\n", s->f);
 }
-// calculate the fitness of s and store it into s->f
-double eval(SOL *s) {
-	int i;
-
-	s->f = 0;
-	for (i = 0; i < N; i++) {
-		s->f += Dist[s->ch[i]][s->ch[(i+1)%N]];
-	}
-
-	if (record.f > s->f) {
-		record.f = s->f;
-		for (i = 0; i < N; i++) {
-			record.ch[i] = s->ch[i];
-		}
-	}
-
-	return s->f;
-}
 
 
-// generate a random order-based solution at s
-void gen_rand_sol(SOL *s) {
-	int i;
-	for (i = 0; i < N; i++) {
-		s->ch[i] = i;
-	}
-	for (i = 0; i < N; i++) {
-		int r = i + rand() % (N - i);	// r is a random number in [i..N-i)
-		int tmp = s->ch[i]; s->ch[i] = s->ch[r]; s->ch[r] = tmp; // swap
-	}
-	
-	// calculate the fitness
-	eval(s);
-}
 
 /* Selection Algorithms */
 /* Roulette - Wheel Selection */
 void RouletteWheelSelection(SOL **p) {
   int i;
   // find min, max, total fitness
-  double f_total = 0.0f;
   double f_min = std::numeric_limits<double>::max();
   double f_max = std::numeric_limits<double>::min();
   for(i = 0; i < PSIZE; i ++) {
     double f_current = population[i].f;
-    f_total += f_current;
     if(f_min > f_current) f_min = f_current;
     if(f_max < f_current) f_max = f_current;
   }
   /* Start shooting Roulette */
-  double point = rand() & PSIZE;
-  double sum = 0;
   double K = 3;
+  double f_total = 0;
+  for(i = 0; i < PSIZE; i ++) f_total += (f_min - population[i].f) + (f_min - f_max)/(K-1);
+  double point = static_cast <float> (rand()) / static_cast <float> (f_total);
+  double sum = 0;
   for(i = 1; i < PSIZE; i++) {
     double f_current = population[i].f;
     double region = (f_min - f_current) + (f_min - f_max)/(K-1);
