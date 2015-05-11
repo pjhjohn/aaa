@@ -197,14 +197,35 @@ void PMXCrossover(const SOL *p1, const SOL *p2, SOL *c, const int stackTrace) {
 	}
   }
 }
+int duplicated(const int val, const int *ch, int from, int to) {
+	int i;
+	for(i = from; i < to; i ++) if (val == ch[i]) return 1;
+	return 0;
+}
+void OrderCrossover(const SOL *p1, const SOL *p2, SOL *c) {
+	setRandomSliceIndexes();
+	int i;
+	for(i = 0; i < N; i++) c->ch[i] = -1;
+	for(i = s1; i < s2; i++) c->ch[i] = p1->ch[i];
 
+	int iC = 0, iP2 = 0;
+	while (iP2 < N) {
+		if(duplicated(p2->ch[iP2], p1->ch, s1, s2)) {
+			iP2 ++;
+		} else {
+			c->ch[iC] = p2->ch[iP2];
+			iC ++;
+			iP2 ++;
+		}
+	}
+}
 void directFromFirst(const SOL *p1, const SOL *p2, SOL *c) {
 	for (int i = 0; i < N; i++) {
 		c->ch[i] = p1->ch[i];
 	}
 }
 void crossover(const SOL *p1, const SOL *p2, SOL *c) {
-  PMXCrossover(p1, p2, c, 0/*false*/);
+  OrderCrossover(p1, p2, c);
   eval(c);
 }
 
@@ -277,7 +298,7 @@ void GA() {
 // read the test case from stdin
 // and initialize some values such as record.f and Dist
 void init() {
-	FILE *pf = fopen("../input/cycle.in.318", "r");
+	FILE *pf = fopen("../input/cycle.in.101", "r");
 	int i, j, tmp;
 	double time_limit;
 
