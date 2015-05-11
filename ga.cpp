@@ -220,30 +220,28 @@ void mutation(SOL *s) {
 /* LOCAL OPTIMIZATION */
 void inverse(SOL *s, int from, int to) {
     int i, temp;
-    for(i = 0; i < (to - from + 1) / 2; i ++) {
-        temp = s->ch[from+i];
-        s->ch[from+i] = s->ch[to-i];
-        s->ch[to-i] = temp;
-    }
+	for(i = 0; i < (to - from) / 2; i++) {
+		temp = s->ch[from+i];
+		s->ch[from+i] = s->ch[to-i-1];
+		s->ch[to-i-1] = temp;
+	}
 }
 void copy(SOL *target, SOL *result) {
     result->f = target->f;
     for(int i = 0; i < N; i ++) result->ch[i] = target->ch[i];
 }
+
 void _2_opt_(SOL *s) {
     int from, to;
-    SOL sol, inversed;
-    copy(s, &sol);
+	double origf, newf;
     while(true) {
-        double solf = fitness(&sol);
         int better = false;
-        for(from = 0; from < N - 1; from ++) {
-            for(to = from + 1; to < N; to ++) {
-                copy(&sol, &inversed);
-                inverse(&inversed, from, to);
-                double invf = fitness(&inversed);
-                if (solf > invf) {
-                    copy(&inversed, &sol);
+        for(from = 0; from < N - 2; from ++) {
+            for(to = from + 2; to < N; to ++) {
+				origf = Dist[s->ch[(from+N-1)%N]][s->ch[from]] + Dist[s->ch[to-1]][s->ch[to]];
+				newf = Dist[s->ch[(from+N-1)%N]][s->ch[to-1]] + Dist[s->ch[from]][s->ch[to]];
+                if (origf > newf) {
+                    inverse(s, from, to);
                     better = true;
                     break;
                 } else continue;
@@ -251,7 +249,6 @@ void _2_opt_(SOL *s) {
         }
         if (!better) break;
     }
-    copy(&sol, s);
 }
 void local_optimization(SOL *s) {
     _2_opt_(s);
@@ -305,7 +302,7 @@ void GA() {
 // read the test case from stdin
 // and initialize some values such as record.f and Dist
 void init() {
-    FILE *pf = fopen("../input/cycle.in.200", "r");
+    FILE *pf = fopen("../input/cycle.in.600", "r");
     int i, j, tmp;
     double time_limit;
 
@@ -342,7 +339,7 @@ void answer() {
 
 int main() {
     srand(time(NULL));
-  int nLoop = 1;
+  int nLoop = 5;
   for(int loop = 0; loop < nLoop; loop++) {
     init();
     GA();
