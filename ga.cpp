@@ -104,68 +104,6 @@ void setRandomSliceIndexes() {
     s1 = temp;
   }
 }
-int hasDuplication(const int index, const int *ch, int from, int to) {
-  int i;
-  for(i = from; i <= to; i ++) {
-    if(index == ch[i]) return 1;
-  } return 0;
-}
-int isOkayToAppend(const int index, const int *ch) {
-  return hasDuplication(index, ch, 0, N-1) == 0 ? 1 : 0;
-}
-int isOffspringCompleted(const SOL *offspring) {
-  int sum = 0;
-  for(int i = 0; i < N; i ++) {
-      if(offspring->ch[i] == -1) return 0;
-      else sum += offspring->ch[i];
-  }
-  return sum == N * (N-1) / 2;
-}
-void PMXCrossover(const SOL *p1, const SOL *p2, SOL *c, const int stackTrace) {
-  setRandomSliceIndexes();
-  /* Copy Parent1 in Slice btw s1 and s2 */
-  if(stackTrace) {pprint("p1", p1); pprint("p2", p2); printf("slice from %d to %d\n", s1, s2);}
-  int i, remains = N - (s2 - s1 + 1);
-  for(i =  0; i <  N; i ++) c->ch[i] = -1;
-  if(stackTrace) pprint("after init", c);
-  for(i = s1; i <= s2; i ++) c->ch[i] = p1->ch[i];
-  if(stackTrace) pprint("after copy", c);
-  int current = (s2+1)%N;
-  int j = s1;
-  while (remains > 0) {
-    if(isOkayToAppend(p2->ch[current], c->ch)) {
-      c->ch[current] = p2->ch[current];
-      current = (current+1)%N;
-      remains --;
-      if(stackTrace) pprint("after safe", c);
-    } else {
-      int appended = 0;
-      while(!appended) {
-        if(hasDuplication(p2->ch[j], p1->ch, s1, s2)) {
-            if(stackTrace) printf("collision. passing @ %d\n", j);
-            j = (j+1)%N;
-        }
-        else {
-          c->ch[current] = p2->ch[j];
-          current = (current+1)%N;
-          appended = 1;
-          remains --;
-          if(stackTrace) { printf("takes # @ %d\n", j); pprint("after notsafe", c); }
-          j = (j+1)%N;
-        }
-      }
-    }
-  }
-  if (isOffspringCompleted(c)) {
-    return;
-  } else {
-    if(stackTrace) exit(1);
-    else {
-        PMXCrossover(p1, p2, c, 1);
-        exit(1);
-    }
-  }
-}
 int duplicated(const int val, const int *ch, int from, int to) {
     int i;
     for(i = from; i < to; i ++) if (val == ch[i]) return 1;
@@ -190,11 +128,6 @@ void OrderCrossover(const SOL *p1, const SOL *p2, SOL *c) {
                 iP2 ++;
             }
         }
-    }
-}
-void directFromFirst(const SOL *p1, const SOL *p2, SOL *c) {
-    for (int i = 0; i < N; i++) {
-        c->ch[i] = p1->ch[i];
     }
 }
 void crossover(const SOL *p1, const SOL *p2, SOL *c) {
@@ -332,18 +265,12 @@ void answer() {
         if (i > 0) printf(" ");
         printf("%d", record.ch[i]+1);
     }
-    printf(" %lf", record.f);
-    printf(" GENERATION : %d", GENERATION);
-    printf("\n");
 }
 
 int main() {
     srand(time(NULL));
-  int nLoop = 5;
-  for(int loop = 0; loop < nLoop; loop++) {
     init();
     GA();
     answer();
-  }
     return 0;
 }
