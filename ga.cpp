@@ -208,7 +208,6 @@ void replacement(const SOL *offspr) {
     }
 }
 
-int GENERATION;
 // a "steady-state" GA
 void GA() {
     int i;
@@ -227,7 +226,6 @@ void GA() {
         mutation(&c);
         local_optimization(&c);
         replacement(&c);
-        GENERATION ++;
     }
 }
 
@@ -235,13 +233,12 @@ void GA() {
 // read the test case from stdin
 // and initialize some values such as record.f and Dist
 void init() {
-    FILE *pf = fopen("../input/cycle.in.600", "r");
     int i, j, tmp;
     double time_limit;
 
-    tmp = fscanf(pf, "%d", &N);
+    tmp = scanf("%d", &N);
     for (i = 0; i < N; i++) {
-        tmp = fscanf(pf, "%lf %lf", &X[i], &Y[i]);
+        tmp = scanf("%lf %lf", &X[i], &Y[i]);
     }
     for (i = 0; i < N; i++) {
         for (j = 0; j < N; j++) {
@@ -249,11 +246,10 @@ void init() {
             Dist[i][j] = sqrt(dx*dx + dy*dy);
         }
     }
-    tmp = fscanf(pf, "%lf", &time_limit);
+    tmp = scanf("%lf", &time_limit);
     TimeLimit = (long long) time_limit;
 
     record.f = 1e100;
-    GENERATION = 0;
 }
 
 
