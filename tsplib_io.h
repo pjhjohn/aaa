@@ -33,7 +33,7 @@
 		유효하다. 나머지 방법은 ReadTspFile()함수 호출후부터 유효하다.
 		\end{itemize}
 	*/
-#define DISTANCE_CALC_METHOD    0
+#define DISTANCE_CALC_METHOD    1
 #endif
 
 

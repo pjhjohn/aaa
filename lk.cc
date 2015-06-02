@@ -1162,8 +1162,14 @@ int main(int argc, char* argv[])
 	tour->convertToOrder(OptPath, n);
 
 	FILE *fout = fopen("cycle.out","w");
-	fprintf(fout,"%lf\n",tourcost);
-	for(int i=1;i<n;i++) fprintf(fout,"%d ",OptPath[i]); fprintf(fout,"\n");
+	//fprintf(fout,"%lf\n",tourcost);
+
+	/*
+	 * old:
+	 * for(int i=1;i<n;i++) fprintf(fout,"%d ",OptPath[i]); fprintf(fout,"\n");
+	 */
+	for(int i=0;i<n;i++) fprintf(fout,"%d ",OptPath[i]+1); fprintf(fout,"\n");
+
 	fclose(fout);
 
 	delete lk; delete tour; delete OptPath;

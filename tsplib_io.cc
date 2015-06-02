@@ -417,7 +417,7 @@ void GetTspFileInfo(FILE* fd, TSP_FILE_INFO* tfi, char* nextl)
 //		else if( strcmp(keyword, "DISPLAY_DATA_TYPE")==0) strcpy(tfi->szDisplayDataType, value);
 //	}
 	fscanf(fd,"%d",&(tfi->nDimension));
-	tfi->nDimension++;
+//	tfi->nDimension++;
 }
 
 void CopyGraphName(char* dest)

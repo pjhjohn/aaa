@@ -84,7 +84,7 @@ void CTour::makeRandomOrderTour(int* dest, int size)
 	
 	for( i=0; i<size/2; i++)
 	{
-		j = random()%size; k = random()%size;
+		j = rand()%size; k = rand()%size;
 		SWAP(dest[j], dest[k], t);
 	}
 }
@@ -290,6 +290,7 @@ int C2EdgeTour::convertFromOrder(int* src, int size)
 	for( i=0; i<m_size; i++)
 		addEdge(src[i], src[(i+1)%m_size]);
 	affirm(isTour());
+	return 0;
 }
 
 const C2EdgeTour& C2EdgeTour::operator=(const C2EdgeTour& src)
@@ -358,7 +359,7 @@ void C2EdgeTour::connectRandom(C2EdgeTour* tabu)
 
 	for( i=0; i<nv/2; i++)
 	{
-		j = random()%nv; k = random()%nv;
+		j = rand()%nv; k = rand()%nv;
 		SWAP(av[j], av[k], tt);
 	}
 	rne = size - getNumEdge(); // we must add the rne number of edges.
