@@ -6,7 +6,7 @@
 #include<fstream>
 
 /* PROJECT 2 ESSENTIALS */
-#define MAXN    600 // Maximum value of N ( of project 2 )
+#define MAXN    1500 // Maximum value of N ( of project 2 )
 #define PSIZE   10  // Size of the population
 
 double X[MAXN], Y[MAXN];    // (X[i], Y[i]) := the i-th location
@@ -231,6 +231,37 @@ void copy(SOL *target, SOL *result) {
     for(int i = 0; i < N; i ++) result->ch[i] = target->ch[i];
 }
 
+/* REPLACEMENT */
+int getIndexOfWorst() {
+  double f_max = std::numeric_limits<double>::min();
+  int index = -1;
+  for(int i = 0; i < PSIZE; i ++) {
+    double f_current = population[i].f;
+    if(f_max < f_current){
+      f_max = f_current;
+      index = i;
+    }
+  } return index;
+}
+void replacement(const SOL *offspr) {
+    int i, p = getIndexOfWorst();
+    population[p].f = offspr->f;
+    for (i = 0; i < N; i++) {
+        population[p].ch[i] = offspr->ch[i];
+    }
+}
+
+#include"lk.h"
+CLK*            lk;
+C2EdgeTour*     tour;
+void LK(SOL *s) {
+	int n = gNumCity;
+	tour->convertFromOrder(s->ch, n);
+	lk->run(tour);
+	s->f = tour->evaluate();
+	tour->convertToOrder(s->ch, n);
+}
+
 void _2_opt_(SOL *s) {
     int from, to;
 	double origf, newf;
@@ -251,29 +282,10 @@ void _2_opt_(SOL *s) {
     }
 }
 void local_optimization(SOL *s) {
-    _2_opt_(s);
+    LK(s);
     eval(s);
 }
 
-/* REPLACEMENT */
-int getIndexOfWorst() {
-  double f_max = std::numeric_limits<double>::min();
-  int index = -1;
-  for(int i = 0; i < PSIZE; i ++) {
-    double f_current = population[i].f;
-    if(f_max < f_current){
-      f_max = f_current;
-      index = i;
-    }
-  } return index;
-}
-void replacement(const SOL *offspr) {
-    int i, p = getIndexOfWorst();
-    population[p].f = offspr->f;
-    for (i = 0; i < N; i++) {
-        population[p].ch[i] = offspr->ch[i];
-    }
-}
 
 int GENERATION;
 // a "steady-state" GA
@@ -302,7 +314,7 @@ void GA() {
 // read the test case from stdin
 // and initialize some values such as record.f and Dist
 void init() {
-    FILE *pf = fopen("../input/cycle.in.600", "r");
+    FILE *pf = fopen("cycle.in", "r");
     int i, j, tmp;
     double time_limit;
 
@@ -339,11 +351,22 @@ void answer() {
 
 int main() {
     srand(time(NULL));
-  int nLoop = 5;
-  for(int loop = 0; loop < nLoop; loop++) {
-    init();
-    GA();
-    answer();
-  }
+
+	/* Create LK */
+	ReadTspFile((char *)"cycle.in"); ConstructNN(20);
+	lk   = new CLK(gNumCity, gNumNN);
+	tour = new C2EdgeTour(gNumCity);
+	/*-----------*/
+
+	int nLoop = 5;
+	for(int loop = 0; loop < nLoop; loop++) {
+		init();
+		GA();
+		answer();
+	}
+
+	/* Destroy LK */
+	delete lk; delete tour;
+	/*------------*/
     return 0;
 }

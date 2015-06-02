@@ -1134,10 +1134,7 @@ int CLookbitQueue::deleteLookbit()
 	/*********************************************************************/
 	/********************* Test Driver ******* ***************************/
 #ifdef LK_TEST
-#include "cpputil.h"
 
-void setupSS();
-void goSS(int step);
 int main(int argc, char* argv[])
 {
 	CLK*            lk;
@@ -1178,39 +1175,6 @@ int main(int argc, char* argv[])
 
 int (*gOrigDist)[20];
 int gMinDist;
-void setupSS()
-{
-	int i, j;
-
-	if( gOrigDist) delete[] gOrigDist;
-	gOrigDist = new int[gNumCity][20];
-	
-	gMinDist = 200000000;
-	for( i=0; i<gNumCity; i++)
-		for( j=0; j<2; j++)
-		{
-			gOrigDist[i][j] = nnd(i, j);
-			if( nnd(i, j) < gMinDist) gMinDist = nnd(i, j);
-		}
-	// space smoothing 
-	for( i=0; i<gNumCity; i++)
-		for( j=0; j<2; j++)
-		{
-			nnd(i, j) = gMinDist; // It should work!!
-		}
-}
-			
-void goSS(int reverse)
-{
-	int step = 1 - reverse;
-	int i, j;
-
-	for( i=0; i<gNumCity; i++) // recover 'step' columns
-	{
-		nnd(i, step) = gOrigDist[i][step];
-	}
-}
-	
 
 #endif
 
