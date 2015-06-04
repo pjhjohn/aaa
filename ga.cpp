@@ -287,7 +287,6 @@ void local_optimization(SOL *s) {
 }
 
 
-int GENERATION;
 // a "steady-state" GA
 void GA() {
     int i;
@@ -306,7 +305,6 @@ void GA() {
         mutation(&c);
         local_optimization(&c);
         replacement(&c);
-        GENERATION ++;
     }
 }
 
@@ -314,13 +312,12 @@ void GA() {
 // read the test case from stdin
 // and initialize some values such as record.f and Dist
 void init() {
-    FILE *pf = fopen("cycle.in", "r");
     int i, j, tmp;
     double time_limit;
 
-    tmp = fscanf(pf, "%d", &N);
+    tmp = scanf("%d", &N);
     for (i = 0; i < N; i++) {
-        tmp = fscanf(pf, "%lf %lf", &X[i], &Y[i]);
+        tmp = scanf("%lf %lf", &X[i], &Y[i]);
     }
     for (i = 0; i < N; i++) {
         for (j = 0; j < N; j++) {
@@ -328,11 +325,10 @@ void init() {
             Dist[i][j] = sqrt(dx*dx + dy*dy);
         }
     }
-    tmp = fscanf(pf, "%lf", &time_limit);
+    tmp = scanf("%lf", &time_limit);
     TimeLimit = (long long) time_limit;
 
     record.f = 1e100;
-    GENERATION = 0;
 }
 
 
@@ -344,9 +340,6 @@ void answer() {
         if (i > 0) printf(" ");
         printf("%d", record.ch[i]+1);
     }
-    printf(" %lf", record.f);
-    printf(" GENERATION : %d", GENERATION);
-    printf("\n");
 }
 
 int main() {
@@ -358,15 +351,13 @@ int main() {
 	tour = new C2EdgeTour(gNumCity);
 	/*-----------*/
 
-	int nLoop = 5;
-	for(int loop = 0; loop < nLoop; loop++) {
-		init();
-		GA();
-		answer();
-	}
+	init();
+	GA();
+	answer();
 
 	/* Destroy LK */
 	delete lk; delete tour;
 	/*------------*/
+
     return 0;
 }
