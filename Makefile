@@ -1,15 +1,16 @@
 all: ga
 
-ga:
+ga: ga.o lk.o edgetour.o tsplib_io.o
 	g++ -lm -o ga ./ga.o ./lk.o ./edgetour.o ./tsplib_io.o -std=c++11 -O3
 
 run: ga
-	./ga < ./input/cycle.in.$(n) 
+	./ga < ./cycle.in > ./cycle.out
 
 clean:
-	rm ga
+	rm -f *.o
+	rm -f ga
 
-ga.o: ga.cpp ga.h
+ga.o: ga.cpp
 	g++ -c ga.cpp -std=c++11 -lm -O3
 
 lk.o: lk.cc lk.h
